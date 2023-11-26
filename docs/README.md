@@ -6,7 +6,7 @@
  - [Chapter 1 - Setup](#Chapter_1_setup)
  - [Chapter 2 - Initializing React App](#Chapter_2_init_react_app)
  - [Chapter 3 - Adding Authentication](#Chapter_3_add_auth)
- 
+ - [Chapter 4 - Adding GraphQL API and Database](#Chapter_4_add_api_db)
 
 # 
 <!-- headings -->
@@ -361,3 +361,172 @@ Add the role AmplifyConsoleServiceRole-AmplifyRole to the app.
 g. Add Confused Deputy Prevention 
 
 For security completeness, if there all multiple service roles it is good practice to update each roles trust policy to protect against confused deputy condition. Since we dont have multiple service roles, I will not add this but the documentation to update the role is here, https://docs.aws.amazon.com/IAM/latest/UserGuide/roles-managingrole-editing-console.html.
+
+3. Pushing changes to Github to deploy to live environment. 
+
+I am using VSCode but you could manually push changes with 
+```shell
+git add .
+git commit -m "add authentication to App.js"
+git push origin main
+```
+
+### Summary of Chapter 3
+
+
+1. Added authentication by updating App.js script in react project.
+2. Update app build specification file, amplify.yaml,via the Amplify Console to configure the build specifications to add the backend to the Continuos Deployment(CD) workflow.
+3. Connected front-end to back-end via the Amplify Console.
+
+
+<!-- headings -->
+<a id="Chapter_4_add_api_db"></a>
+# Chapter 4 - Adding GraphQL API and Database
+
+### Overview
+
+Will add an API to the app via the Amplify CLI and libraries. The app that is going to be created is a notes app that allows users to createm, delete and list notes. 
+
+references: https://aws.amazon.com/getting-started/hands-on/build-react-app-amplify-graphql/module-four/
+
+note: I am following this Amazon learning resource to learn the proper way of setting up a full-stack environment with AWS. 
+
+
+### 
+
+                Application Programming Interface (API) Concept
+    APIs are mechanisms that allow two software programs or applications(Server and Client) to communicate with each other. They have custom contracts that setup the structure of requests and responses. 
+    source: https://aws.amazon.com/what-is/api/. 
+
+
+    An API analogy I like is ordering food at a restaurant. There is the client(customer), chef(server), and the waiter(API). The customer(client) requests an order from the chef(server) via the waiter(API). 
+
+    - How will it be used in this project?
+
+### 
+
+              GraphQL Concept
+    GraphQL is a query and manipulation language for APIs. It is a language that structures and describes data requirements and interactions. GraphQL defines the shape of the output within the query itself. It was developed by Facebook and open-sourced in 2015. 
+    sources: https://graphql.org/learn/ and https://aws.amazon.com/what-is/api/
+
+Example of a typical GraphQL query:
+```GraphQL
+query {
+ post(title: "How does GraphQL work?") {
+   id
+   author {
+     name
+     profile_url
+   }
+   content
+  }
+}
+```
+Example of a typical GraphQL query result:
+```GraphQL
+{
+  "post": {
+    "id": 123,
+    "author": {
+      "name": "Jeff Barr",
+      "profile_url": "https://aws.amazon.com/blogs/aws/author/jbarr/"
+     },
+    "content": "GraphQL gives the API users the flexibility..."
+  }
+}
+```
+### 
+
+                AWS AppSync Concept
+    AppSync is a fully managed GraphQL API service. It connects apps to multiple data sources. Simplifies data access by a unified API that provides a single endpoint to securely query/update data from multiple databases, microservices, and APIs. Serverless and scales automatically. Pub/Sub API's can push data updates to subscribed clients over serverless web sockets to clients. 
+
+    source: https://aws.amazon.com/appsync
+
+### 
+
+
+                Serverless Database Concept 
+    Is collection of organized information that decouples storage management from query operations. The advantage is that these two parts can scale independently. The storage can be scaled as needed while the query requests can be scaled at its own pace depending on demand. 
+
+### 
+
+                Amazon DynamoDB Concept
+
+    Is a fully managed, key-value NOSQL, serverless database. DynamoDB has built-in security, continuos development, continuous backups, automateed multi-Region replication, in-memory caching, and data import and export tools. 
+    
+    source: https://aws.amazon.com/dynamodb/
+  
+    Difference between NoSQL vs MySQL?
+
+    NoSQL is a non-relational database meaning it does not follow a tabular schema of rows and columns. Instead non-relational databases stores data in an optimized manner depending on the type of data being stored. The term NoSQL (Not only SQL) refers to data stores that do not necessarily use SQL for queries. Some popular models are: 
+    - Key-value database where data is stored under keys and values.
+    - Document Databases where data is stored in documents similar to JSON objects.
+    - Wide-column stores where data is stored and queried using row key, column names, and cell timestamps
+    -Graph Databases where data is stored under vertices and edges. Used to visualize and analyze connections between different pieces of data. 
+
+    source: https://medium.com/nerd-for-tech/mysql-vs-nosql-b0838f6ae10
+
+
+    MySQL is a relational database that follows a tabular schema of rows and columns to store data. MySQL is more popular since it's been around longer and is open source. 
+
+    source: https://learn.microsoft.com/en-us/azure/architecture/data-guide/big-data/non-relational-data
+
+### Steps
+
+1. Create GraphQL API and database 
+
+a. Run the following code from the root of the app directory and answer questions. 
+
+```shell
+amplify add api
+
+? Select from one of the below mentioned services: GraphQL
+? Here is the GraphQL API that we will create. Select a setting to edit or continue: Continue
+? Choose a schema template: Single object with fields: (e.g., “Todo” with ID, name, description)
+✔ Do you want to edit the schema now? (Y/n):  yes
+```
+
+b. Open GraphQL file in app directory. I am using VSCode.
+   /amplify/backend/api/<api_name>/schema.graphql.
+
+   ![Alt text](<Screenshot 2023-11-25 at 7.19.44 PM.png>)
+
+c. update the file with following code and save:
+
+```shell
+type Note @model @auth(rules: [ { allow: public } ] ){
+  id: ID!
+  name: String!
+  description: String
+}
+```
+
+![Alt text](<Screenshot 2023-11-25 at 7.20.56 PM.png>)
+
+
+
+The GraphQL API has been configured locally. 
+
+2. Deploy local GraphQL API.
+
+a. run the following code to push local changes to amplify console 
+
+```shell
+amplify push --y
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
