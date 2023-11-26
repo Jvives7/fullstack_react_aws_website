@@ -14,6 +14,9 @@
     "categories": {
       "auth": {
         "fullstackreactawswebb42b79cc": {}
+      },
+      "api": {
+        "fullstackreactawsweb": {}
       }
     }
   }
