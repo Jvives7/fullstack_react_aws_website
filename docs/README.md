@@ -1,13 +1,11 @@
 # Overview
 
-
-
  # Table of Contents:
  - [Chapter 1 - Setup](#Chapter_1_setup)
  - [Chapter 2 - Initializing React App](#Chapter_2_init_react_app)
  - [Chapter 3 - Adding Authentication](#Chapter_3_add_auth)
  - [Chapter 4 - Adding GraphQL API and Database](#Chapter_4_add_api_db)
-
+ - [Chapter 5 - Adding Storage and Associated Image](#Chapter_5)
 # 
 <!-- headings -->
 <a id="Chapter_1_setup"></a>
@@ -22,7 +20,7 @@
 
     react
 ### 
-
+<!-- Add a Architecture Diagram -->
 
 Topics covered in this part are:
 1. Creating React app
@@ -509,11 +507,353 @@ The GraphQL API has been configured locally.
 
 2. Deploy local GraphQL API.
 
-a. run the following code to push local changes to amplify console 
+a. run the following code to build local backend and provision in the cloud.
+
+"amplify push" will build all the local backend resources and provision it in the cloud.
+
+This will create three things 
+ - Create the AWS AppSync API
+ - Create a DynamoDB table
+ - Create a local GraphQL script located at src/graphql
 
 ```shell
 amplify push --y
 ```
+
+After the files are built. The back-end will successfully deploy.
+
+
+
+To view GraphQL API run the following code and select GraphQL API
+
+```shell
+amplify console api 
+
+> Choose GraphQL
+```
+This opens the following UI console
+
+![Alt text](<Screenshot 2023-11-25 at 7.32.12 PM.png>)
+
+To view Amplify app run the following code and select AWS Console
+
+```shell
+amplify console
+
+> AWS Console
+```
+
+This opens the amplify app in AWS Console
+
+![Alt text](<Screenshot 2023-11-25 at 7.34.27 PM.png>)
+
+
+3. Write frontend code to interact with the API
+
+a. Now that the backend has been deployed, we update src/App.js script to add functionality to the front-end of the app. The following code for App.js has been sourced from the AWS resource center. I will create my own react project in the future. This is for tutorial sake. 
+source: https://aws.amazon.com/getting-started/hands-on/build-react-app-amplify-graphql/module-four/
+
+Update src/App.js with: 
+```javascript
+import React, { useState, useEffect } from "react";
+import "./App.css";
+import "@aws-amplify/ui-react/styles.css";
+import { Amplify } from "aws-amplify";
+import {
+  Button,
+  Flex,
+  Heading,
+  Text,
+  TextField,
+  View,
+  withAuthenticator,
+} from "@aws-amplify/ui-react";
+import { listNotes } from "./graphql/queries";
+import {
+  createNote as createNoteMutation,
+  deleteNote as deleteNoteMutation,
+} from "./graphql/mutations";
+
+const App = ({ signOut }) => {
+  const [notes, setNotes] = useState([]);
+
+  useEffect(() => {
+    fetchNotes();
+  }, []);
+
+  async function fetchNotes() {
+    const apiData = await Amplify.graphql({ query: listNotes });
+    const notesFromAPI = apiData.data.listNotes.items;
+    setNotes(notesFromAPI);
+  }
+
+  async function createNote(event) {
+    event.preventDefault();
+    const form = new FormData(event.target);
+    const data = {
+      name: form.get("name"),
+      description: form.get("description"),
+    };
+    await Amplify.graphql({
+      query: createNoteMutation,
+      variables: { input: data },
+    });
+    fetchNotes();
+    event.target.reset();
+  }
+
+  async function deleteNote({ id }) {
+    const newNotes = notes.filter((note) => note.id !== id);
+    setNotes(newNotes);
+    await Amplify.graphql({
+      query: deleteNoteMutation,
+      variables: { input: { id } },
+    });
+  }
+
+  return (
+    <View className="App">
+      <Heading level={1}>My Notes App</Heading>
+      <View as="form" margin="3rem 0" onSubmit={createNote}>
+        <Flex direction="row" justifyContent="center">
+          <TextField
+            name="name"
+            placeholder="Note Name"
+            label="Note Name"
+            labelHidden
+            variation="quiet"
+            required
+          />
+          <TextField
+            name="description"
+            placeholder="Note Description"
+            label="Note Description"
+            labelHidden
+            variation="quiet"
+            required
+          />
+          <Button type="submit" variation="primary">
+            Create Note
+          </Button>
+        </Flex>
+      </View>
+      <Heading level={2}>Current Notes</Heading>
+      <View margin="3rem 0">
+        {notes.map((note) => (
+          <Flex
+            key={note.id || note.name}
+            direction="row"
+            justifyContent="center"
+            alignItems="center"
+          >
+            <Text as="strong" fontWeight={700}>
+              {note.name}
+            </Text>
+            <Text as="span">{note.description}</Text>
+            <Button variation="link" onClick={() => deleteNote(note)}>
+              Delete note
+            </Button>
+          </Flex>
+        ))}
+      </View>
+      <Button onClick={signOut}>Sign Out</Button>
+    </View>
+  );
+};
+
+export default withAuthenticator(App);
+```
+Note: the code provided from AWS resource center is depreciated. I have fixed the problem. 
+import { API } from "aws-amplify"; changes to import { Amplify } from "aws-amplify";
+
+The code provided by the AWS learning resource center has three main functions: 
+
+- fetchNotes: This function uses the API class to send a query to the GraphQL API and retrieve a list of notes. 
+
+- createNote: This function uses the API class to send an mutation to the GraphQL API. This function passes variables to GraphQL to create a note with form data.
+
+- deleteNote: This function uses the API class to pass variables as a GraphQL mutation to delete a note. 
+
+
+
+b. run the code with:
+
+```shell
+npm start
+```
+
+### Summary of Chapter 4
+
+
+1. Overview of AWS AppSync, Amazon DynamoDB, NoSQL, APIs, and GraphQL concepts.
+2. Created GraphQL API and database 
+3. Deployed GraphQL API and database 
+4. Updated App.js with AWS learning resources frontend code note app to interact with the API 
+
+
+<!-- headings -->
+<a id="Chapter_5"></a>
+# Chapter 5 - Adding Storage and Associated Image
+
+
+### Overview
+
+Will add storage functionality to app by using Amplify CLI libraries and Amazon S3.
+Will update GrapghQL schema format to associate each image with note.
+Will update the react app to enable image uploading, fetching and rendering. 
+
+references: https://aws.amazon.com/getting-started/hands-on/build-react-app-amplify-graphql/module-five/?e=gs2020&p=build-a-react-app-four
+
+note: I am following this Amazon learning resource to learn the proper way of setting up a full-stack environment with AWS. 
+
+
+### 
+
+                Amazon Simple Storage Service (Amazon S3)
+    Our app requires a storage mechanism/service for uploading images, fetching, and rendering. One option is to encode the files and send as a string to save in database. This is disadvantages because of the encoded file size, the computational expense, and complexity of encoding/decoding. Instead a specialized storage service such as, Amazon S3 can be used.
+
+### Steps
+
+1. Create Storage Service with Amplify
+
+Amplify storage category will be used to add storage funcionality to our app. Use the Amplify CLI to choose the configuration in the following way: 
+
+```shell 
+amplify add storage
+? Select from one of the below mentioned services: Content (Images, audio, video, etc.)
+✔ Provide a friendly name for your resource that will be used to label this category in the project: · imagestorage
+✔ Provide bucket name: · <unique_bucket_name>
+✔ Who should have access: · Auth users only
+✔ What kind of access do you want for Authenticated users? · create/update, read, delete
+✔ Do you want to add a Lambda Trigger for your S3 Bucket? (y/N) · no
+```
+
+![Alt text](<Screenshot 2023-11-25 at 8.30.13 PM.png>)
+
+
+2. Updating GraphQL Schema in app codebase 
+
+Update the amplify/backend/api/notesapp/schema.graphql script with the following schema and save:
+
+```graphql
+type Note @model @auth(rules: [ { allow: public } ] ){
+  id: ID!
+  name: String!
+  description: String
+  image: String
+}
+```
+
+![Alt text](<Screenshot 2023-11-25 at 8.33.47 PM.png>)
+
+Changes for storage service and updating GraphQL schema have now been successfully implemented.
+
+3. Deploy Local Storage Service Additions and Local GraphQL updates. 
+
+Run the following command: 
+
+```bash 
+amplify push --y
+```
+
+Once confirmed in terminal, the changes will have successfully been deployed. 
+
+4. Update the React App 
+
+The backend storage and GraphQL services have been deployed, the React app front end will be updated to provide functionality to upload and view images from a note. 
+
+Open src/App.js and make the following changes:
+
+
+a. Add the storage class and image component to the Amplify imports: 
+
+
+```javascript
+import { Amplify, Storage } from 'aws-amplify';
+import {
+  Button,
+  Flex,
+  Heading,
+  Image,
+  Text,
+  TextField,
+  View,
+  withAuthenticator,
+} from '@aws-amplify/ui-react';
+```
+
+
+b. Update the fetchNotes function to fetch an image if there is an image associated with note. 
+
+
+```javascript
+async function fetchNotes() {
+  const apiData = await Amplify.graphql({ query: listNotes });
+  const notesFromAPI = apiData.data.listNotes.items;
+  await Promise.all(
+    notesFromAPI.map(async (note) => {
+      if (note.image) {
+        const url = await Storage.get(note.name);
+        note.image = url;
+      }
+      return note;
+    })
+  );
+  setNotes(notesFromAPI);
+}
+```
+
+c. Update createNote function to add the image to the local image array if an image is associated with the note. 
+
+```javascript
+async function createNote(event) {
+  event.preventDefault();
+  const form = new FormData(event.target);
+  const image = form.get("image");
+  const data = {
+    name: form.get("name"),
+    description: form.get("description"),
+    image: image.name,
+  };
+  if (!!data.image) await Storage.put(data.name, image);
+  await Amplify.graphql({
+    query: createNoteMutation,
+    variables: { input: data },
+  });
+  fetchNotes();
+  event.target.reset();
+}
+```
+
+d. Update deleteNote function to delete files from storage when notes are deleted:
+
+```javascript
+async function deleteNote({ id, name }) {
+  const newNotes = notes.filter((note) => note.id !== id);
+  setNotes(newNotes);
+  await Storage.remove(name);
+  await Amplify.graphql({
+    query: deleteNoteMutation,
+    variables: { input: { id } },
+  });
+}
+```
+
+e. Add additional input "image: to the from in the return block: 
+
+
+```javascript
+
+```
+
+
+
+
+
+
+
+
+
 
 
 
