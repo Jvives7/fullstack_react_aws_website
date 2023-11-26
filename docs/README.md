@@ -1,4 +1,18 @@
+# Overview
+
+
+
+ # Table of Contents:
+ - [Chapter 1 - Setup](#Chapter_1_setup)
+ - [Chapter 2 - Initializing React App](#Chapter_2_init_react_app)
+ - [Chapter 3 - Adding Authentication](#Chapter_3_add_auth)
+ 
+
+# 
+<!-- headings -->
+<a id="Chapter_1_setup"></a>
 # Chapter 1 - Setup
+
 
 ### Concepts
 >amplify
@@ -43,6 +57,9 @@ git push origin master
 4. Open AWS Amplify service and connect github to host react app
 
 Reference/source: https://www.youtube.com/watch?v=DHLZAzdT44Y
+
+<!-- headings -->
+<a id="Chapter_2_init_react_app"></a>
 # Chapter 2 - Initializing React App
 Creating a simple web app using AWS Amplify
 
@@ -126,8 +143,8 @@ No AppSync API configured. Please add an API
 e. Follow login instructions to login to amplify studio
 ![Alt text](<Screenshot 2023-11-25 at 7.01.05 AM.png>)
 
-
-
+<!-- headings -->
+<a id="Chapter_3_add_auth"></a>
 # Chapter 3 - Adding Authentication
 
 Will use Amplifies CLI and libraries to add authentication to app.
@@ -260,3 +277,87 @@ npm start
 
 This app now has the authentication workflow by using the withAuthenticator workflow. Allows sign up, sign in, password reset, and multifactor auth. A sign out button option that allows users to sign out.
 
+
+
+2. Setting up CI/CD for the full-stack 
+
+a. To view the app locally, run:
+```
+amplify console
+Which site do you want to open? AWS console
+```
+b. Sign in to the AWS Console
+![Alt text](<Screenshot 2023-11-25 at 4.32.35 PM.png>)
+
+c. Click App settings > Build settings
+![Alt text](<Screenshot 2023-11-25 at 4.39.44 PM.png>)
+
+d. Update app build specification file, amplify.yaml, with following. This change will configure the build specifications to add the backend to the Continuos Deployment(CD) workflow. 
+
+```shell
+version: 1
+backend:
+  phases:
+    build:
+      commands:
+        - '# Execute Amplify CLI with the helper script'
+        - amplifyPush --simple
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - yarn install
+    build:
+      commands:
+        - yarn run build
+  artifacts:
+    baseDirectory: build
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - node_modules/**/*
+```
+![Alt text](<Screenshot 2023-11-25 at 4.43.31 PM.png>)
+
+
+
+ Go to Build image settings > Edit
+
+![Alt text](<Screenshot 2023-11-25 at 4.50.11 PM.png>)
+
+Then, scroll down and click Add package version everride > Amplify CLI and save.
+![Alt text](<Screenshot 2023-11-25 at 4.56.27 PM.png>)
+
+e. Connect the front end branch to the backend environment that was just created.
+
+Under the app hosting environment section, edit the continuous deployment set up under the master branch.
+![Alt text](<Screenshot 2023-11-25 at 4.59.44 PM.png>)
+
+Select the staging backend environment we just created to connect front end to backend. The front-end wil now be connected to the backend. 
+![Alt text](<Screenshot 2023-11-25 at 5.01.41 PM.png>)
+
+Follow instructions to setup the service role in Amplify, https://docs.aws.amazon.com/amplify/latest/userguide/how-to-service-role-amplify-console.html.
+
+Choose the Amplify service and the use case as Amplify - Backend Deployment.
+![Alt text](<Screenshot 2023-11-25 at 5.05.31 PM.png>)
+Accept default permissions
+![Alt text](<Screenshot 2023-11-25 at 5.09.55 PM.png>)
+Add a role name and description. In this case the ole name is AmplifyConsoleServiceRole-AmplifyRole. It will allow Amplify Backend Deployment to access AWS resources on your behalf. 
+![Alt text](<Screenshot 2023-11-25 at 5.13.20 PM.png>)
+
+Scroll down and create role.
+
+f. Add permission to Amplify Console to deploy backend resources. 
+
+Go back to AWS Amplify Console under the app we are creating.
+
+Click App settings > General > Edit
+![Alt text](<Screenshot 2023-11-25 at 5.15.00 PM.png>)
+
+Add the role AmplifyConsoleServiceRole-AmplifyRole to the app. 
+![Alt text](<Screenshot 2023-11-25 at 5.19.32 PM.png>)
+
+g. Add Confused Deputy Prevention 
+
+For security completeness, if there all multiple service roles it is good practice to update each roles trust policy to protect against confused deputy condition. Since we dont have multiple service roles, I will not add this but the documentation to update the role is here, https://docs.aws.amazon.com/IAM/latest/UserGuide/roles-managingrole-editing-console.html.
